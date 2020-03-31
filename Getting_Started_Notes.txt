@@ -1,0 +1,45 @@
+Pro Git: Getting Started, Notes
+
+Git Study
+	• Version control systems are a way to save many different versions of code, and track changes in new versions
+		○ This makes it easy to revert back to old versions, or see what changed in a new version to break code
+	• Distributed version control systems like Git have a central server with all of the versions, and each user copies the repo onto their system to have local copies of the versions
+		○ This prevents all versions getting lost if the server goes down
+		○ Also, each developer can work on their own copy first before adding to the server version (I think)
+	• Many distributed version control systems store the versions of the code as files and track changes as file-based changes
+		○ Each change is saved as a new file with the changes
+	• Git does something differently, it takes snapshots of all files each time a save is made, and stores a reference to the snapshot
+		○ If no changes are made to a particular file, the snapshot of that file is not changed
+		○ So one save on one file snaps all files in the directory, checks for changes in all files, and saves changes to each file as new versions. All non changed files get the snapshot removed.
+		○ In this sense, many distributed version control systems work on one file at a time, while git works on all of them and only saves actual changes after a scan
+	• Git operates locally, so the directory is first saved to the local machine, and then changes can be made to it. If connected online, then changes are uploaded to the server. This lets you work offline when needed, and update the server when you have a connection. If you are offline for any reason, you can still work. Some other version control systems need you to connect to the server (since it had all of the code and versions) in order to make changes.
+		○ But does this come at a cost to memory and storage on the machine? Can a directory take up too much space on the local machine? 
+	• Git calculates changes made and then modifies the files with the calculated changes. The changes are then referred to by the calculation (a hexidecimal value)
+		○ Calculation mechanism is called "SHA-1 hash"
+	• Git generally adds data to the database, deletions aren't common
+The Three States
+	• Git has three states, and these are very important to remember
+	• Modified: this is a changed file that has not been committed to the database yet
+	• Staged: this is a marked Modified file in its current version to be included in the next commit snapshot
+	• Commited: this is data that is safely stored in the database
+	• There are then three stages of a Git project, with reference to those three states
+	• Working Tree: this is a single checkout of one version of the project. Files are pulled from the compressed git directory and put on the disk for local modification
+	• Staging Area: this is a file that is in the git directory, and it has information on what goes into the next commit. Actually called "index" in Git language.
+	• Git Directory: this is the project database, and it's what is copied when you clone a repository from another computer
+Git workflow:
+	1. Make a file "modified" by working on it from the working tree
+	2. Make a file "staged" once changes are made and it is marked for committing
+	3. You do a commit, which takes a snapshot and takes all of the "staged" files and stores the snapshot in the git directory permanently
+So to summarize:
+	• Files in git directory = committed
+	• Files in working tree that are changed but not staged = modified
+	• Files in working tree changed and marked to commit = staged
+Git can be run from command line or GUI, but not all tools are in the GUI so learning command line is ideal.
+
+Side note: I learned that the command "sudo" in Linux stands for "superuser do", which means to execute the command with administrator privilege
+
+Settings:
+	• Git config is a tool that lets you change setting
+	• Use "git config --global [setting]" to change settings
+Help:
+	• "git help [command]" gives you the help output for any command you need help with

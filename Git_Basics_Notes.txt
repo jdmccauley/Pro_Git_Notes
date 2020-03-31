@@ -1,0 +1,339 @@
+Git Basics, Notes
+
+This section covers most if not all git concepts and commands that are needed for basic use.
+Note that since I am using the Windows Subsystem for Linux, I am going to take notes and perform all actions from the Linux command line. This actually makes things much easier than trying to use Windows Powershell.
+
+Git repositories are obtained in two major ways:
+	• Converting a local directory (not under version control) to a git repository
+	• Cloning an existing repository from somewhere else
+
+To convert an existing directory locally to a git repository, you need to initialize a repository. This can be done by doing the following steps:
+	1. Change working directory to the directory you want to convert to a repository
+		a. In command line
+	2. Type "git init", which initializes a git repository
+		a. This makes a directory in your current directory called '.git', and it copies all of the files in the working directory to the repository
+	3. To start version-controlling existing files, run the following commands (explanation to follow later):
+		a. 'git add *.c'
+		b. 'git add LICENCE'
+		c. 'git commit -m 'Initial project version'
+	Now we have a repository, tracked files, and an initial commit.
+	
+How to clone a git repository:
+	1. Find url or path to the repository
+	2. 'git clone [url or path] [new directory name if you want]'
+		a. For example, 'git clone https://github.com/libgit2/libgit2'
+			i. This clones the libgit2 repository from github and names the repo 'libgit2' on your machine
+		b. For example, 'git clone jdmccauley@jupyter:test/git_testing/project.git my_git_project'
+			i. This uses SSH to clone a repo named project.git from the jupyter server and renames it as 'my_git_project' on my machine
+	**Do you need to do the commands above to start version controlling like in converting an existing one?
+	See below, they are tracked and unmodified.
+
+NOTE: Files in the directory with the repo associated with it are tracked or untracked. Tracked files are files included in the last snapshot, and they can have any of the three states (modified, staged, and committed/unmodified (unmodified is the same as committed)). Untracked files are those that were not included in the last snapshot, and are not in the staging area.
+
+When a repo is cloned, all files are tracked and unmodified by default since they were 'checked out' and unmodified.
+
+As you edit tracked files, they are marked as 'modified', and you have to select them for staging when desired. Then they are committed in the next snapshot, and converted to 'unmodified' again (still tracked).
+['Removed files' are converted from unmodified (tracked) to untracked. More on this later.]
+
+Checking the status of files:
+	• 'git status' command tells you the status of files in the git repo
+	• For example, the 'git status' of a cloned repo should say the following:
+		○ 'On branch master
+		Your branch is up to date with 'origin/master'.
+		Nothing to commit, working directory clean'
+		○ So this means no files that are being tracked are modified, and no untracked files are seen by git (otherwise those would be listed).
+		○ More on branching later, if unchanged it will be master.
+	• If a new file is added ('README'), but not tracked, this is what you would see with 'git status':
+		'On branch master
+		Your branch is up-to-date with 'origin/master'.
+		Untracked files:
+		(use "git add <file>..." to include in what will be committed)
+		README
+		nothing added to commit but untracked files present (use "git add" to track)'
+		○ This README file was not included in the last snapshot, and it will not do so unless it is told to include to add the file to git (start tracking it)
+Tracking new files:
+	• 'git add [file]' is how you start tracking a file
+	• This is what you would see if you started tracking 'README':
+		○ 'On branch master
+		Your branch is up-to-date with 'origin/master'.
+		Changes to be committed:
+		(use "git restore --staged <file>..." to unstage)
+		new file: README'
+	• Note that you can also add directories in the same way***
+Staging modified files
+	• 'git add [file]' is how you stage files for commit, just like you add them
+		○ Yes it is the same command
+	• Example of 'CONTRIBUTING.md' modified, not committed:
+		○ 'On branch master
+		Your branch is up-to-date with 'origin/master'.
+		Changes to be committed:
+		(use "git reset HEAD <file>..." to unstage)
+		new file: README
+		Changes not staged for commit:
+		(use "git add <file>..." to update what will be committed)
+		(use "git checkout -- <file>..." to discard changes in working directory)
+		modified: CONTRIBUTING.md'
+	• And this is it after 'git add CONTRIBUTING.md'
+		○ 'On branch master
+		Your branch is up-to-date with 'origin/master'.
+		Changes to be committed:
+		(use "git reset HEAD <file>..." to unstage)
+		new file: README
+		modified: CONTRIBUTING.md'
+	• Note that if you modify the file after staging, it will also be listed as modified. 'git add [file]' again to mark it for staging with those new changes
+Short 'git status':
+	• You can shorten the command to make the output less wordy as the following:
+		○ 'git status -s'
+		○ 'git status --short'
+	• Output example:
+		○ 'M README
+		MM Rakefile
+		A lib/git.rb
+		M lib/simplegit.rb
+		?? LICENSE.txt'
+	• Notations:
+		○ M = Modified
+		○ A = staged
+		○ ?? = untracked
+		○ MM = Modified, staged, and modified again (not staged with the second round of changes)
+Git ignoring:
+	• You can have git ignore certain files, file types, directories, and specific files/filetypes in specific directories. You can set the rules how you see fit.
+	• In general, this is how you do it:
+		○ 'cat git.ignore 
+		○ [rule]
+		○ [rule]
+		○ …
+		○ '
+	• That modified the file git.ignore in that directory to include the [rule] lines
+	• Here are some basic ignore rule formats, with many more online:
+		# ignore all files ending in '~'
+		*.~
+		# ignore all .a files
+		*.a
+		# but do track lib.a, even though you're ignoring .a files above
+		!lib.a
+		# only ignore the TODO file in the current directory, not subdir/TODO
+		/TODO
+		# ignore all files in any directory named build
+		build/
+		# ignore doc/notes.txt, but not doc/server/arch.txt
+		doc/*.txt
+		# ignore all .pdf files in the doc/ directory and any of its subdirectories
+		doc/**/*.pdf
+	• Note that blank lines or lines with '#' in front are ignored 
+Viewing staged and unstaged changes:
+	• The 'git diff' command shows differences between staged files and modified files
+	• To see differences in staged files and committed files, use 'git diff --staged'
+Commiting Changes
+	• 'git commit' is how you commit staged files to the repo
+	• Once the command is run, a text editor pops up so you can enter commit notes
+	• 'git commit -v' includes the 'git diff' output in the editor so you can see what changed
+	• Note what lines starting with '#' in the notes will not be included in the git commit notes
+	• Each commit is a snapshot that can be reverted to later
+	• You can run 'git commit -m [notes]' to skip the editor part and just write you notes quickly
+Skipping the staging area:
+	• If you want to quickly stage and commit all modified files (without having to do the 'git add' for each file), run the following:
+	• 'git commit -a'
+		○ This '-a' option just moves everything from modified to staged and commits all in the same command
+Removing files:
+	• 'git rm [file]'
+		○ This removes a file from the staging area and untracks it, so it is no longer tracked in the repo
+		○ The file must also be deleted from the local working directory for this to work
+			§ Remove the file from the directory first, then run the 'git rm [file]' command to remove it from the repo
+	• If the file is currently modified or staged, you must include the '-f' option in the 'git rm' command
+	• To keep the file saved in the local directory but remove it from the git repo, use the following:
+		○ 'git rm --cached [file]'
+	• Note that you can also use the file-glob rules used in the git.ignore actions in the same way with 'git rm'
+Moving files (actually renaming them)
+	• Git does not track file renaming
+	• To rename a file, do the following:
+		○ 'git mv [old_file_name] [new_file_name]'
+	• This works the same as moving a file to a new one (the command mv in linux with file names renames the old file to the new file name), removing the old file from git, and adding the new file to git
+Viewing Commit History
+	• 'git log'
+	• This is one of the most important commands in git
+	• It displays the commit history in reverse chronological order (latest first) of the following:
+		○ Commit SHA-1 checksum
+		○ Author
+		○ Date
+		○ Commit notes
+	• Patches: 'git log -p' or 'git log --patch'
+		○ This shows the 'git diff' for the commit, so what changed in the commit
+	• You can add other options to the 'git log' to limit the number of recent commits ('-2' for the last two)
+	• Short git log version = 'git log --stat'
+
+Viewing Commit History
+Some other useful 'git log' options:
+	• --pretty=oneline
+		○ This prints all of the commit log into one line per commit, which makes it much faster to see many commits and their notes
+	• --graph
+		○ This shows the branches in a line that make it easy to see all of the branches in a visual
+	There are many more, and you can always look online to find them. I only showed a few.
+What is also useful is that you can add a --since=[date or timeline] or --until[date] to show only certain commits within the criteria.
+Lots of formats work apparently, like "2020-01-1" and "2 years 3 days 2 seconds ago"
+
+You can also filter for specifics:
+	• --author=[name]
+		○ To search for commits made by specific people
+	• --grep=[text]
+		○ To search for specific text in a commit
+One of the most important options is '-S [string]'
+	• This finds the changes in the number of times the [string] is mentioned in the code
+		○ This can be used to see of calls to 'function_name' have been added or removed in a commit log
+You can also search for changes to files only in a particular directory:
+	• --[path]
+Merges of branches are a lot of commits in the git log generally, so to display a git log without those:
+	• '--no-merges'
+Undoing Things
+Many times there are minor mistakes when doing a commit, such as a typo or forgetting to 'git add' one single file to the staging area before committing. The following is a way to make those edits without making an entirely new commit:
+'git commit --amend'
+This replaces the most recent commit with the new commit. So here is how an error can be fixed by not adding 'README.txt' for example:
+
+'git commit -m 'I did something amazing to fix that huge error we had and I'm happy.''
+*Forgot to add the README.txt*
+'git add README.txt'
+'git commit --amend'
+
+This prevents you from making these commits all the time:
+'git commit -m 'oops y'all I forgot to add file.py''
+
+Unstaging a Staged File
+Sometimes you may have staged all files ('git add *') and didn't want to add one file.
+'git status' actually reminds you how to unstage files (remove them, and un-modify them as well each time you run the command).
+I'll go over the command, but remember you are always reminded with 'git status'
+	• 'git reset HEAD -- [file]'
+		○ This unstages a file
+There is more to 'git reset', but more on that later in the book. For now, 'git reset HEAD' is what's important to know for unstaging at least.
+Note that 'git reset --hard' discards all changed to tracked files.
+
+Reverting a modified file
+	• 'git --checkout [file]'
+		○ This reverts a modified file to its most recent version
+		○ Note that 'git status' reminds you of this command each time you have a modified file when you run 'git status'
+		○ This technically replaces the local version of the file with the most-recently committed version, so note that your edits are deleted
+Working with Remotes
+This is very important!
+How to show remote connections:
+	• 'git remote'
+		○ This shows you a list of each remote handle
+		○ If you cloned a repo, there will always be a 'origin', which is the default name for servers git clones from
+			§ So there is no need to add another remote connection when a repo is cloned
+			§ Only need to make another remote connection (outside of cloning) if the repo is new and is being put onto a server
+	• 'git remote -v'
+		○ This shows a list of the remotes again, with links
+Adding Remote Repositories
+Git already adds the 'origin' remote when a repo is cloned.
+To add a new remote, do the following:
+	• 'git remote add [name] [url]'
+To update, you can run the following:
+	• 'git fetch [remote_name]'
+		○ This retrieves any new changes to the remote repo and adds them to [remote_name]/master
+		○ More on branching later
+Note: 'git fetch [remote_name (can be 'origin')]' updates local repo with new changes to remote server, but stores them as a separate branch. You have to 'git merge' to merge those changes to the local branch.
+Fetching and Pulling from Remote Repos
+To save time, 'git pull [remote_name]' fetched and merges all changes in the same command.
+Note that 'git clone' sets up the local master branch to track the master branch in the remote, so fetches/merges and pulls work on the local master branch.
+Pushing to Remotes
+	• 'git push [remote] [local branch]'
+		○ This pushes your local branch (you say which one, which may be 'master' most of the time) to update the repo at the 'remote' (likely 'origin' if cloned originally).
+	More on branching later, but a 'git push origin master' will update the remote repo with the local master branch. How to push as a different branch?
+	
+	It is important to note that if you try to push to a remote after someone else pushed, you will be rejected. You must update your local repo with their changes, and then you can push again. Remotes don't accept pushes that aren't fully updated since the past push.
+		What if you push as a different branch? Can you do that? That way you can push without updating each time (I hope).
+Inspecting a Remote
+	• 'git remote show [remote_name]'
+		○ This shows the following:
+			§ Url for remote repository
+			§ Tracking branch information
+				□ How the local branch merges with the remote branch in a 'git pull'
+				□ How the remote branch merges with the local branch in a 'git push'
+		○ This is very helpful in knowing how your actions affect the remote
+Renaming and Removing Remotes
+This is good to know in case I accidentally add remotes.
+	• 'git remote rename [current_remote_name] [new_remote_name]'
+		○ This changes the current remote name to a new name.
+	• 'git remote remove [remote_name]'
+		○ This removes a remote
+		○ You can also use 'git remore rm [remote_name]' to save typing
+		○ Once you remove a remote, all remote-tracking branches and settings for the remote are removed
+			§ Does the repo stay? I believe so.
+Tagging
+It is very useful to mark certain commit points with tags. This way you can note that a commit is 'version 1', or 'v1.1', or whatever name you want, instead of having to refer to the commit SHA-1 checksum (which can get confusing very fast).
+Also, you can tag at any point. This way you can wait for a series of commits before calling something 'v1.1'.
+How to list tags:
+	• 'git tag'
+		○ You can also use 'git tag -l' or 'git tag --list'
+		○ This lists the tags in alphabetical order
+		○ You can also show a list with search terms:
+			§ 'git tag -l "[search]*"
+				□ This shows all tags with a similar name to [search]
+Creating Tags
+Tags are of two types:
+	• Lightweight
+		○ These just point to a specific commit
+		○ No additional information
+	• Annotated
+		○ These contain much more information:
+			§ Checksum
+			§ Tagger name
+			§ Tagger email
+			§ Date
+			§ Tagging message
+			§ Can be signed and verified with GNU Privacy Guard
+		○ Annotated tags are recommended so you can have all of the info.
+Annotated Tags
+	• 'git tag -a [tag_name]'
+		○ This is how you make an annotated tag. The text editor pops up to make a tag message. You can also just use the option '-m "message_text"' to quickly add your tag message like you can already do with commit messages.
+	• You can run 'git show [tag]' to see all of the information in the annotated tag.
+		○ Shows tagger info, commit date, and annotation message before the commit information
+Lightweight Tags
+	• 'git tag [tag_name]'
+		○ Do not need to include any options like '-a' for the annotated tag
+	• Running 'git show [tag]' with lightweight tags will just show the commit info
+Tagging Later
+You can take previous commits as desired, not only when a new commit is made.
+You have to refer to the commit by its checksum, so it is useful to run
+	• 'git log -pretty=oneline'
+To quickly see the checksum list for commits.
+To tag a previous commit, run the following (this is an annotation example):
+	• 'git tag -a [tag_name] [checksum]'
+		○ Note that for the checksum, you can get away with only part of the checksum.
+		○ The book shows an example of tagging with only 7 characters of the checksum
+Sharing Tags
+By default, 'git push' does not include tag names when pushing to remote servers. You have to specifically call the tag just like you do with branches:
+	• 'git push [remote_name] [tag_name]'
+To push many tags at once, just run 'git push' with the remote and the '--tags' option:
+	• 'git push [remote_name] --tags'
+Deleting Tags
+The following can delete a tag from the local repo:
+	• 'git tag -d [tag_name]'
+The '-d' option is how you delete the tag.
+Note that this does not remove the tag from the remote server.
+There are a few ways to delete the tags from a server, and this is the most intuitive way:
+	• 'git push [remote_name] --delete [tag_name]'
+Checking out Tags
+Tags are great because they are easy to reference when checking out a repo up to a specific commit. This is how you update your local repo to a specific tag (I'm sure you can checkout for commits too if you reference the checksum):
+	• 'git checkout [tag_name]'
+This does checkout the tag and put it in your repo in 'deteched HEAD' state. This means that if you make any changes to the repo and commit again:
+	• The tag will stay the same
+	• New commit won't be in any branch and it won't be reachable except with the commit checksum
+Generally, it's just best to make a new branch with the tagged version of the repo:
+	• 'git checkout -b [new_branch_name] [tag_name]'
+		○ Committing after this point, it will be in the new branch. Be sure to make a new tag when you do this (like 'v2.1' with the original being 'v2.0')
+Git Aliases
+Git aliases are essentially 'nicknames' that you can give commands to make them less intensive to type all the time. You can change them with 'git config'.
+For example, this is changing 'checkout to 'co':
+	• 'git config --global alias.co checkout'
+You can also use aliases for commands to make them easier to remember. For example, unmodifying a file isn't that intitive: 'git reset HEAD --[file]'
+It can be changed to make things easier:
+	• 'git config --global alias.unstage 'reset HEAD --'
+		○ 'git unstage [file]' now unstages the file
+You can also use this to rename specific commits:
+	• 'git config --global alias.last 'log -1 HEAD'
+		○ This makes the most recent commit called 'last'
+You can also call commands outside of git (say you write some script to work in git) to work with alias in git. To do this, add '!' in front of the command. For example, 'gitk' is a command for visualizing git branching, but it isn't included in git:
+	• 'git config --global alias.visual '!gitk'
+		○ Now it works as 'visual'
+Note that for commands that are multiple words or not included in git, you need to encase them in single quotes ('example') to work.
+
+This is the end of the Git Basics Chapter. Now on to the chapter on Git Branching. This will be very important, and is one of the main parts of Git that makes it useful. People call branching in git its 'killer feature'. Learning how to use it is so important in being a developer.
