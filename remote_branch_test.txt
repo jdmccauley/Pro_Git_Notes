@@ -1,0 +1,6 @@
+This is a test to see how adding a remote branch works.
+I made this text file on 'master', and I am going to push it as a new remote branch.
+I will run:
+git branch -u origin/remote_branch_test
+
+I will report the results here.
