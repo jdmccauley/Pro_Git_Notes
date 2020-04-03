@@ -11,3 +11,9 @@ The following should work however:
 	a. git checkout -b remote_branch_test
 2. Push local branch to remote
 	a. git push origin remote_branch_test
+
+Once changes are made locally and commit is done, then 'git push [remote] [branch] does not automatically work.
+
+Do the following to get this to work:
+1. git branch -u origin/remote_branch_name
+This then sets the local branch to be a remote tracking branch to the remote branch.
