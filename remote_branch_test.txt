@@ -4,3 +4,10 @@ I will run:
 git branch -u origin/remote_branch_test
 
 I will report the results here.
+It did not work, it said that origin/remote_test_branch did not exist.
+
+The following should work however:
+1. Make new branch locally
+	a. git checkout -b remote_branch_test
+2. Push local branch to remote
+	a. git push origin remote_branch_test
