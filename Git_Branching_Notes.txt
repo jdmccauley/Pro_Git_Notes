@@ -1,0 +1,316 @@
+Git Branching Notes
+
+Git Branching
+Branching in Git is when you diverge from the main line of the repository and continue to make edits to the files. Branching is not new to version control systems, but they way that it works in Git is very lightweight and powerful compared to many others.
+
+How git stores data:
+	• Git doesn't store a series of changes, it stores snapshots
+	• On commit, git stores a commit object that contains a pointer to the snapshot of the staged content
+		○ Also contains author name, email, commit message, and pointers to commits that came before this commit
+			§ Pointers for the earlier commits are:
+				□ Zero parents for initial commit
+				□ One parent for normal commit
+				□ Multiple parents for commit that results in merge of two+ branches
+	• Note that to understand the git storage concepts, it is important to understand the following:
+		○ Tree
+		○ Pointer
+		○ Checksum
+	I am going to take a break from git to understand these things.
+	
+	-Pointer
+	A pointer is an object that stores a memory address. They are typically used to store the address of a given variable.
+	
+	-Checksum
+	This is a calculation to give a unique 'code' (checksum) to a file. In a way, this checksum is an identifier for the file. Say you make a change the file and run a checksum calculation on the file, then the new checksum will be very similar to the original checksum, but there will be one or more character differences. So checksums are unique codes that you can use to identify a file, and check if copies of that file are indeed the exact same as the original by comparing the checksums.
+	When git saves and stores any file, it is given a checksum. Git then refers to the version of the file by the checksum. So when you have a file of the same name committed many times in git, the file will have the same name but a different checksum for each commit (version) of the file.
+	
+	-Tree
+	A tree is an abstract data structure that consists of a root, and children. The root and the children are nodes, and they can have values. The children are associated with their parent, the root. The tree can continue a path of nodes with many children of children of children of children, forever.
+	
+Now to continue with Git:
+	• Here is an example of a git commit (and how the data is stored), with a directory of three files. They are staged and committed.
+		○ Git computes a checksum when the files are staged, for each file
+		○ Git stores the version of the file in the git repository as a blob. (git calls these blobs, which stands for Binary Large Object). Git makes these objects called blobs to handle the files.
+		○ Git adds the checksum to the staging area
+		Now we commit
+		○ Git checksums each subdirectory (just the directory containing the three files in this case), and stores the directory as a tree object in the git repository
+		○ Git makes a commit object with the metadata (author, date, commit note) and pointer to the root of the tree.
+		Now the git repository has five objects. Each object has its own checksum.
+		1. Blob 1 for file 1
+		2. Blob 2 for file 2
+		3. Blob 3 for file 3
+		4. Tree that lists the contents of the directory and which contents are stored as which blobs
+		5. Commit with pointer to the root of the tree and the commit metadata
+			i. Commits are their own type of object
+
+		Say you make another commit, then this commit also stores a pointer to the commit that came before it.
+	• Branches are essentially movable pointers to each of the commits
+	• Default branch is called master
+	• As commits to 'master' are made, the master branch points to the most recent pointer 
+Creating a new branch
+	• 'git branch [branch_name]'
+		○ This creates a new pointer to the same commit you're working on
+		○ Git knows the branch because of a special pointer called 'HEAD', which is a pointer to the local branch you're working on
+		○ Note that this doesn't switch you to the new branch, it just creates it
+	• 'git log --decorate'
+		○ This shows you where the branch pointers are pointing (by showing where the branch is relative to the commit hash)
+Switching Branches
+	• 'git checkout [branch_name]'
+		○ This is how you switch to an existing branch
+		○ It moves 'HEAD' to point to the existing branch specified in the command
+		So 'HEAD' is the current branch.
+		You move 'HEAD' to what branch you want to be working on.
+		
+So, a branch is essentially a pointer to a commit (and working tree, I think).
+HEAD is a pointer to the current branch.
+As you make new commits to a branch, the branch's pointer points to the newest commits, and HEAD stays pointing to that working branch.
+The other branches stay pointing to previous commits.
+Note that when a branch is pointing to a specific commit, it is pointing to the checksum of that commit.
+	• When you make a commit on one branch and then revert back to another branch that is behind, the files in the 'HEAD' pointing branch will have versions of the file from that commit snapshot.
+		○ Git does this by editing the files to look like they did before in the last commit.
+	• 'git log' will only show the commit history of the branch that 'HEAD' is pointing to
+	• 'git log [branch]' will show you the commit history for another branch
+	• 'git log --all'
+		○ This will show the commit history for all branches
+	• When a new commit is made in a different branch, the history is now Diverged
+	• You can visualize diverged history with the following command:
+	• 'git log --oneline --decorate --graph --all'
+		○ It may be useful to make an alias for this command, like 'visual' or something
+		○ This shows where the branch pointers are, and how the commit history has diverged
+	• Git branches are files that contain the checksum of the commit that they point to, so they are easy to make and delete
+		○ Most other version control systems have to copy all files each time a new branch is made. So git is pretty simple yet powerful.
+	• The fact that parent commits are always stored, git can find the parents and find the best way to merge branches when the parent is behind the current branch
+	• 'git checkout -b [new_branch_name]'
+		○ This is an easy way to make a new branch and switch to it at the same time
+
+
+Basic Merging
+	• 'git merge [branch to commit to 'HEAD' branch]'
+		○ To merge, you must checkout to the branch you want to absorb the other branch (most of the time, this is master)
+		○ You specify which branch you want to merge with your current working branch
+	• There are two types of merges: "fast-forward" and "three-way merge"
+	• "Fast-forward" merges are when a branch on a parent commit catches up to a direct child commit. This only requires adding and subtracting the new commit from the recent commit, so it's essentially an update. This does not require any complicated changes, the branch just catches up to the branch to merge by changing the current branch pointer to point to the newer commit.
+	• "Three-way-merge"
+		○ This happens when a branch tries to merge with a branch that isn't a direct descendent of the branch. Mostly when work history has diverged; say 'master' is on commit A3, and there is a branch that made a commit on A1 to A1.1. This type of merge is when trying to merge A1.1 into A3.
+		○ To do this, git looks at the snapshots of the two branches to merge, and the most recent common ancestor of the two
+		○ Git then makes a new snapshot that results from the calculation of the three way merge (merging the two branches and their most recent common ancestor), makes a commit that points to this result snapshot
+		○ This new result snapshot is the merge commit, and is the new current point that the 'HEAD' points to
+	• Note that once a merge is complete, it is good practice to delete the merged branch:
+		○ 'git branch -d [old_branch]'
+Basic Merge Conflicts
+Sometimes this merging process doesn't work as easily as it looks. Say you change something in two different ways in the two branches from the ancestor branch of the two, and now git has to merge those two different changes; it refuses to do so when you try to merge, and the merge pauses. Git pauses the merging process until you resolve the conflict.
+The merge conflicts are listed as unmerged. You can see this with 'git status'.
+Git then marks each file with the conflict with a standard marker format that contains both versions that conflict.
+The version on 'HEAD' is shown after the '<<<<<<<' line and before the '=======' line.
+The version of the branch to merge is shown after the '=======' line and before the '>>>>>>>' line.
+The '<<' and '>>' lines show the branch and file like this: 'new_branch:file.txt'.
+
+Here is an example of a merge conflict mark, when the master branch on 'HEAD' has print("This is a test.") and the new_branch has print("This is ALSO a test."), in the file test.py:
+
+<<<<<<< HEAD:test.py
+Print("This is a test.")
+=======
+Print("This is ALSO a test.")
+>>>>>>> new_branch:test.py
+
+You will see these messages in both files. To fix, just change both files by picking which version of the lines you want, commit each branch with the fixes, and merge again.
+
+Note that this message is only when you look at the files in a merge conflict. The command line just shows that a conflict occurred when trying to merge, not the issues themselves. To get a visual of the conflict, run:
+	• 'git mergetool'
+		○ This gives you a visual of the conflicts. It also has a tool to help you resolve the conflict.
+		○ Once you exit the tool, git will ask you if the merge was successful. If you say it was, git stages the file it marked as resolved. Then you can
+		○ 'git commit'
+			§ And you get to edit a commit message about committing the merge following conflict resolution.
+			§ It is a good idea to modify the message to say how you resolved the conflict and what changes you made.
+I should test this and paste the outputs here. I'll make the test.py example from above and show the 'git mergetool' process.
+
+Here is the git log with options to show changes.
+
+jdmccauley@JDMcCauley-T22:~/test/test$ git log --oneline --decorate --graph --all
+* 9a0bd39 (new_branch) On branch new_branch Now test.py has print("This is ALSO a test.")
+* 2e583bb (HEAD -> master) On branch master Initial commit
+
+Actually that did a fast forward. I'll make other changes.
+
+
+Here are the changes, with the changes below the original line:
+Master: print("This is also a test.")
+New_branch: print("This is ALSO a test.")
+
+Here is a new git log with options, where I made the following for test.py:
+Print("This is a test.")
+
+jdmccauley@JDMcCauley-T22:~/test/test$ git log --oneline --decorate --graph --all
+* 1390a25 (new_branch) On branch new_branch Added the following line: print("This is ALSO a test.")
+| * dd7ce01 (HEAD -> master) On branch master Added the following line: print("This is also a test.")
+|/
+* fade71e On branch master Initial commit
+
+jdmccauley@JDMcCauley-T22:~/test/test$ git merge new_branch
+Auto-merging test.py
+CONFLICT (content): Merge conflict in test.py
+Automatic merge failed; fix conflicts and then commit the result.
+
+jdmccauley@JDMcCauley-T22:~/test/test$ git mergetool
+
+This message is displayed because 'merge.tool' is not configured.
+See 'git mergetool --tool-help' or 'git help config' for more details.
+'git mergetool' will now attempt to use one of the following tools:
+tortoisemerge emerge vimdiff
+Merging:
+test.py
+
+Normal merge conflict for 'test.py':
+  {local}: modified file
+  {remote}: modified file
+Hit return to start merge resolution tool (vimdiff):
+
+[See git_mergetool_test.png]
+
+I made the following change:
+
+[See git_mergetool_test_my_edit.png]
+
+Then the program went through a series of screens showing the change once I ran ':wq' in each screen.
+Then I ran 'git commit'. The new_branch merged.
+
+It seems like this tool requires some study to understand it. For the time being, I will edit each file individually to see conflicts, not use the mergetool.
+
+Branch Management
+	• 'git branch' not only shows you where 'HEAD' is with a '*', but is also has options that allow you to see which branches have been merged or not
+	• 'git branch --merged'
+		○ This shows you branches that have been merged with the current branch. These branches could be deleted with 'git branch -d [branch_name]' with no losses
+	• 'git branch --no-merged'
+		○ This shows you branches that have not been merged with the current branch
+		○ If you try to delete branches in this list, git will refuse, but say that if you run the '-D' option when trying to delete, you can bypass it.
+	• 'git branch -v'
+		○ This shows you a list of the branches and their current commits (and commit messages), alongside showing which is the current branch with a  '*'
+Branching Workflows
+Every team has their own branching strategy, and here some common workflows are discussed.
+-Long term branches
+A common strategy is to have a master branch, development branch, and topic branches.
+	• The master branch is the stable branch, so it is the current version of the software available to users
+	• The development branch is the branch of commits that are in development. They are currently worked on, and may not be as stable as the master branch. Once commits in this branch are tested and deemed stable, the master branch is merged with this branch
+	• The topic branches are short-lived branches that solve issues in the development branch, and are generally very unstable. Once these branches solve their problem, they are merged with the development branch, and the development branch starts testing on the new changes for stability.
+Can master merge to a certain point of another branch?
+	Online, I found that you can do this by:
+	'git cherry-pick [commit_hash]'
+	There are other options too, but for a quick answer to this question, you can run that command with a specific commit hash to merge to that commit even if it's in another branch.
+Remote Branches
+Remote references are pointers to remote repositories and include branches, tags, and more.
+	• 'git ls-remote [remote_name]' or 'git remote show [remote_name]'
+		○ These can show a list of remote references
+	• Remote-tracking branches are pointers to the state of remote branches
+		○ They are local pointers that only move when git does any network communication
+	• '[remote_name]/[branch_name]'
+		○ This is the remote tracking branch. For example, the master on 'origin' looks like 'origin/master'.
+		○ More on 'tracking branches' later
+	• So if you close the repo, it is 'master' on your machine. To push to the master branch on the remote, you have to push to the remote/master, not just 'master'
+	• If changes are made to the remote branch you're working on locally, your pointer stays on your branch of the repo while the branch in the remote moves forward 
+	• To update your remote, run:
+	• 'git fetch [remote]'
+		○ This updates [remote]/[master]
+Note that 'fetch' just downloads the updates. You have to merge them to your local repo. 'pull' will find updates and merge in the same command.
+Pushing
+Pushing a remote (and one of its branches specifically) is how you update the remote with your local changes.
+	• 'git push [remote] [branch]'
+		○ This is how you push changes from your local repo (current repo) to the remote branch
+
+
+Remote Branches additional notes
+Remote references are pointers in your remote repositories (includes branches and tags). List of remote references can be seen with:
+	• 'git ls-remote [remote_name]' or 'git show [remote_name]'
+Remote-tracking branches are references to the state of remote branches, and they're local pointers that you cannot move yourself. These pointers move as you update the branch (as far as I understand).
+Remote-tracking branches are named:
+	• '[remote_name]/[branch_name]'
+		○ For example, a master branch in 'origin' is called 'origin/master'
+When you make modifications to a branch on your machine, you modify the local copy of the branch. 
+	• Say you clone 'origin/test_branch'.
+		○ Local changes are made onto 'test_branch', while the test_branch on 'origin' remains unchanged. Specifically, you make changes to 'test_branch', while the remote tracking branch 'origin/test_branch' remains unchanged
+			§ You make changes by pushing
+Local = [branch_name]
+Remote = [remote_name]/[branch_name]
+
+Tracking Branches
+Checking out a local branch from a remote-tracking branch makes a "tracking branch", and the branch it tracks is called the "upstream branch".
+	So the local copy is the "tracking branch", remote is the "upstream branch".
+The special trait of "tracking branches" is that since they are tracking a remote upstream branch, running 'git pull' automatically updates your tracking branch. Git knows that this is the branch to pull to, you don't have to specify which one it is in this case. Otherwise, you would have to fetch and then specify which branch to merge the fetch with.
+	• So 'git pull' works with "tracking branches"
+
+Git clone automatically creates a 'master' branch to track 'origin/master' for the repository. However, 'git clone' does not automatically create tracking branches for other existing branches in the remote. To do that, you can run one of the following options:
+	• 'git checkout -b [tracking_branch_name] [remote_name]/[remote_branch]'
+		○ This sets up the local version of the remote branch and switches to it
+	• 'git checkout --track [remote_name]/[remote_branch]'
+		○ This makes a local version of the remote branch and switches to it
+			§ It keeps the same name for the local branch as the remote branch
+	• 'git checkout [remote_branch]'
+		○ This is an even shorter version, and works only if the remote branch name is unique to only one remote already set up
+
+You can also change a local branch unassociated with a remote repository (say you make a new branch and now need to add it to the remote).
+	• 'git branch -u [remote_name]/[name_for_remote_branch]'
+		○ This command should be run when there is a new branch made in the remote, and you want to make your current branch a tracking branch for the remote branch. Once you run the command, you can run 'git push' with no other arguments
+	• 'git branch --set-upstream-to [remote_name]/[remote_branch]'
+		○ This lets you explicitly set what your upstream branch will be
+	• 'git branch -vv'
+		○ This shows you a list of the tracking branches, and what they track
+		○ Also shows you if your tracking branch is behind the upstream branch (has commits you need to fetch), and if your branch is ahead (changes you need to push to the remote)
+		○ The numbers are only for the last time you fetched from the server
+			§ This does not include all changes since you last fetched
+	• 'git fetch --all; git branch -vv'
+		○ This fetches and shows you tracking branch positions relative to the remote (you can tell if you need to merge or not)
+Pulling
+Running 'git fetch' only gets changes, it does not merge them with your current working directory. However, 'git pull' does that all in one step.
+	• 'git pull'
+		○ This fetches and merges changes of your upstream repository into your current local repo
+		○ Does not work if your branch is not a tracking branch with an associated upstream branch
+		○ Cloned repos can do this since they automatically track the origin/master
+Deleting Remote Branches
+Say you are done with a branch on the remote (you merged it with master). 
+	• 'git push [remote_name] --delete [remote_branch_name]'
+		○ This deletes the remote branch
+		○ It just removes the pointer from the server
+		○ Data stays in garbage collection bin until dump is run, so files can be recovered if done soon
+Rebasing
+Rebasing is another way in Git to integrate changes from one branch to another.
+This is different in that instead of making a new commit to represent a merge, rebasing edits the branch to include the changes of another branch. 
+Say you have commits 1, 2, 3, 4, and 5, with master on commit 5.
+You now have a branch called 'test' that is branched at commit 3, with its own new commit called commit 6.
+Instead of doing a merge with master and making a new commit 7, rebasing makes a new commit named commit 8 in the test branch, to overlay the changes in the test branch to the current version of the master branch.
+This is a way to catch your branch up to another branch without making your other branch need to do a three-way merge when you want to merge the two branches.
+Rebasing is a way to simplify a commit history after branching off.
+	• 'git checkout [to_branch_to _rebase]'
+	• 'git rebase [branch_to_rebase_into]'
+		○ This looks at the common ancestor of the two branches, saves a file that contains the 'git diff' of each commit in the current branch,  makes a new commit in the merging branch, and applies all of the differences to that commit
+			§ Now the most recent commit in the rebased branch is caught up with the other branch, and includes the branch-specific changes
+		○ Now you can 'git merge [rebased_branch]' to fast-forward the branch with the rebased branch with no conflicts
+	• 'git merge [rebased_branch]'
+		○ This is necessary after a rebase to apply the edited commit changes to the most recent version of the file
+	• Rebasing is useful when you need to merge your changes with a remote repository and you aren't the one that manages the repository
+		○ The maintainer can then just do a fast-forward merge instead of having to make all of the edits when trying to do a three-way merge from a pull
+Note that this is just a way to keep changes from a branch without adding the branching history to the updated branch's history.
+More Interesting Rebases
+When there are branches off of branches off of branches, how to rebase can get confusing, especially if you only want to rebase off of the original branch into the 3rd branch.
+	• 'git rebase --onto [branch_to_rebase_from] [branch_to_not_include] [branch_to_update]
+		○ This lets you not include changes in a branch that have been updated and may not work with your current branch yet
+		○ You can do this, merge the branch_to_rebase_from, see if the changes are stable, then rebase with the other branch not included in the last rebase
+Perils of Rebasing
+This is a very important thing to remember:
+"Do not rebase commits that exist outside your repository and that people may have based work on."
+This means that you should not rebase a branch (edit its history) when people are dependent upon its commit history. When they try to merge, they will run into issues because the branch to merge with has a commit history different than they worked with.
+
+Editing the history can simplify things, but avoid it when people are dependent on that history.
+In general, it is okay to rebase things in your own local repository, but not to rebase the remote without consulting others.
+Rebase when you rebase
+Git does calculate a checksum that is based on patches introduced in a commit, called the "patch-id".
+If you rebase on something with new commits from the original branch, git will tell you what was rebased the last time and applies them on the new branch.
+	• 'git rebase [branch_based_on_older_work]/[rebased_branch]'
+		○ This rebases the branch_based_on_older_work to the position it used to be based on
+	• 'git pull --rebase'
+		○ This does the same thing, I believe
+		○ This is an important command in case mistakes are made
+Merge vs Rebase
+There is a debate between using merge and using rebase. With merging every time, you have a complete history of every change made in the development cycle. When you rebase, you re-write the history so you do lose a record of all changes and how they were implemented.
+
+While losing a history can be seen as tampering with the truth, some people see the history as the needing to the most readable timeline of how the project developed. In some cases, a full history is very confusing and can make the development process hard to follow, so an editing of the history to make it reasonable can be helpful to other developers.
+
+It's a tough question, and it depends on how you want to craft the story: either a full history or a simplified (if full is too complicated) history.

@@ -1,0 +1,71 @@
+Git Stashing and Cleaning Notes
+
+Stashing
+I actually learned that when you switch branches, you cannot keep modified files. When you switch branches, you can keep staged files but you cannot merge when there are staged files waiting for commit.
+This must be where stashing is useful.
+
+Stashing and Cleaning
+	• 'git stash'
+		○ This takes the state of the working directory, with modified tracked files + staged changes, and saves it on a stack of unfinished changes that you can reapply later
+		○ This lets you switch branches while saving this work
+		○ Note that 'git stash push' is preferable to 'git stash save', more on this later but there is a note in the book saying that this is preferable since the 'git stash save' command may get phased out
+	• 'git stash push [files_to_stash]'
+		○ This pushes new items to the stash
+		○ Can just use 'git stash' as well to do the same thing when not adding any arguments for files
+	• 'git stash list'
+		○ This shows you stashes made and their stash notes
+	• Note that stashing starts the editor to make a comment for the stash
+		○ Adding the -m option to 'git stash' or 'git stash push' lets you enter the stash comment as per usual
+	• 'git stash apply [stash_name]'
+		○ This lets you restore stashes to the current branch working directory
+		○ You can pass with is with no arguments to restore the most recent stash
+		○ Calling a specific stash lets you restore that stash
+		○ Note that Git modifies the files when restored, so the working directory then shows modified files
+			§ This is important to note, especially because staged files in the branch before the stash are now modified
+		○ You can run this on any branch to restore the stash, not just the branch the stash was made on
+			§ Stashes are saved for the working directory, and notes which branch it was made on
+	• 'git stash apply [stash_name] --index'
+		○ This restores the current branch working directory with the stash, and keeps the staged files as staged
+		○ You can do this to keep the staged files as staged, otherwise all files in the stash are 'modified'
+	• 'git stash drop [stash_name]'
+		○ This removes a stash
+		○ Note that when you apply a stash, it still remains in the stash list
+		○ It is a good idea to delete stashes when done with them
+Creative Stashing
+Here some other git stash variants are discusses.
+	• 'git stash [stash_name] --keep-index'
+		○ This only restores staged items from the stash (that were staged during the stash)
+	• 'git stash --include-untracked'
+		○ This includes untracked files in the stash, since they are included in the default 'git stash'
+	• 'git stash -u'
+		○ Shorthand command to also include untracked files in the stash
+	• 'git stash --all' 
+		○ This stashes everything, including ignored files
+	• 'git stash -a'
+		○ Same as 'git stash --all'
+	• 'git stash --patch'
+		○ This goes through all of the modified files and lets you stash each individual change, and keeps the rest in the working directory (not stashed)
+Creating a Branch from a Stash
+	• 'git stash branch [branch_name]'
+		○ This makes a branch with the stash that was most recently made
+		○ This also deletes the stash if the branch is made with no conflicts in the merge
+		○ This is how you can easily restore stashes and test them
+		○ I believe you should be able to run this with a specific stash name, but I'll have to test that
+Cleaning you Working Directory
+	• 'git clean'
+		○ This removes all untracked files in the working directory without stashing
+		○ This is not a good idea unless you are sure that you don't want the changes
+			§ Such as garbage files or unnecessary files like ipyb checkpoints
+	• 'git stash --all'
+		○ This is a useful way to clean your working directory without deleting everything
+		○ When possible, run this before 'git clean'
+	• 'git clean -f -d'
+		○ This does 'git clean' without asking if you really want to do that
+	• 'git clean --dry-run'
+		○ This shows you what will happen if you attempt 'git clean'
+	• 'git clean -n'
+		○ Same as 'git clean --dry-run', just the shorthand
+	• 'git clean -x'
+		○ The -x option includes filetypes includes in the .gitignore list when cleaning
+	• 'git clean -I'
+		○ The letter I (not l as in long), lets you run 'git clean' with an interactive mode to go through each file and let you delete or keep each file with a series of options to do so
